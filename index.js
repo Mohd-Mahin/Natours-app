@@ -11,35 +11,11 @@ dotenv.config({ path: './config.env' });
 const app = express();
 
 mongoose
-  .connect(process.env.DATABASE_LOCAL, {
+  .connect(process.env.DATABASE, {
     dbName: 'natours-app',
   })
   .then((res) => {
     console.log('Connected to database...');
-    const tourSchema = new mongoose.Schema({
-      name: {
-        type: String,
-        required: [true, 'A tour must have a name'],
-        unique: true,
-      },
-      rating: {
-        type: Number,
-        default: 4.5,
-      },
-      price: {
-        type: Number,
-        required: [true, 'A tour must have a price'],
-      },
-    });
-
-    const Tour = mongoose.model('Tour', tourSchema);
-    const testTour = new Tour({
-      name: 'The Forest Hikers',
-      rating: 4.5,
-      price: 300,
-    });
-
-    testTour.save();
   });
 
 // middleware
