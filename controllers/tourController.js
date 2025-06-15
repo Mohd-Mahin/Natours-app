@@ -1,5 +1,6 @@
 const Tour = require('../models/tourModels');
 const APIFeatures = require('../utils/APIFeatures');
+const AppError = require('../utils/appError');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
@@ -14,7 +15,7 @@ exports.aliasTopExtravagant = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = async (req, res) => {
+exports.getAllTours = async (req, res, next) => {
   try {
     // execute a query
     const features = new APIFeatures(Tour.find(), req.query);
@@ -34,17 +35,20 @@ exports.getAllTours = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(404).json({
-      status: 'Fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 404);
+    next(err);
   }
 };
 
-exports.getTour = async (req, res) => {
+exports.getTour = async (req, res, next) => {
   try {
     const { id } = req.params;
     const tour = await Tour.findById(id);
+
+    if (!tour) {
+      return next(new AppError('No tour found with this id', 404));
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -52,14 +56,12 @@ exports.getTour = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(400).json({
-      status: 'fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 400);
+    next(err);
   }
 };
 
-exports.createTour = async (req, res) => {
+exports.createTour = async (req, res, next) => {
   try {
     const newTour = await Tour.create(req.body);
     res.status(201).json({
@@ -69,19 +71,22 @@ exports.createTour = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 400);
+    next(err);
   }
 };
 
-exports.updateTour = async (req, res) => {
+exports.updateTour = async (req, res, next) => {
   try {
     const updatedTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
       new: true, // return a new document
       runValidators: true,
     });
+
+    if (!updatedTour) {
+      return next(new AppError('No tour found with this id', 404));
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -89,31 +94,32 @@ exports.updateTour = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(400).json({
-      status: 'fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 400);
+    next(err);
   }
 };
 
-exports.deleteTour = async (req, res) => {
+exports.deleteTour = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await Tour.findByIdAndDelete(id);
+    const tour = await Tour.findByIdAndDelete(id);
+
+    if (!tour) {
+      return next(new AppError('No tour found with this id', 404));
+    }
+
     res.status(204).json({
       status: 'success',
       data: null,
     });
   } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 404);
+    next(err);
   }
 };
 
 // Pipeline Aggregation
-exports.getTourStats = async (req, res) => {
+exports.getTourStats = async (req, res, next) => {
   try {
     const stats = await Tour.aggregate([
       {
@@ -170,15 +176,13 @@ exports.getTourStats = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 404);
+    next(err);
   }
 };
 
 // busy month of the year.
-exports.getMonthlyPlan = async (req, res) => {
+exports.getMonthlyPlan = async (req, res, next) => {
   try {
     const year = req.params.year * 1;
     const plan = await Tour.aggregate([
@@ -235,9 +239,7 @@ exports.getMonthlyPlan = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: error.message,
-    });
+    const err = new AppError(error.message, 404);
+    next(err);
   }
 };
