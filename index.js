@@ -87,6 +87,20 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Listenting on port ${PORT}...`);
+});
+
+process.on('unhandledRejection', (error) => {
+  console.log('Unhandled Rejection!!! Shutting down...', error);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+process.on('uncaughtException', (error) => {
+  console.log('Uncaught Exception!!! Shutting down...', error);
+  server.close(() => {
+    process.exit(1);
+  });
 });
