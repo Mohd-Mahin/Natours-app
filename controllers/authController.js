@@ -1,7 +1,7 @@
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
-const AppError = require('../utils/appError');
+const AppError = require('../utils/AppError');
 
 function createToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_TOKEN, {
@@ -81,10 +81,6 @@ exports.authenticate = async (req, res, next) => {
     }
 
     req.user = currentUser;
-
-    // check if user still exists
-    // check if user changed password after the token was issued
-    // grant access to protected route
     next();
   } catch (error) {
     const err = new AppError(error.message, 400, error);

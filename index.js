@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const AppError = require('./utils/appError');
+const AppError = require('./utils/AppError');
 
 dotenv.config({ path: './config.env' });
 
