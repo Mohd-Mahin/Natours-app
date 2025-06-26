@@ -35,7 +35,7 @@ exports.getAllTours = async (req, res, next) => {
       },
     });
   } catch (error) {
-    const err = new AppError(error.message, 404);
+    const err = new AppError(error.message, 404, error);
     next(err);
   }
 };
@@ -56,7 +56,7 @@ exports.getTour = async (req, res, next) => {
       },
     });
   } catch (error) {
-    const err = new AppError(error.message, 400);
+    const err = new AppError(error.message, 400, error);
     next(err);
   }
 };
@@ -71,7 +71,7 @@ exports.createTour = async (req, res, next) => {
       },
     });
   } catch (error) {
-    const err = new AppError(error.message, 400);
+    const err = new AppError(error.message, 400, error);
     next(err);
   }
 };
@@ -94,7 +94,7 @@ exports.updateTour = async (req, res, next) => {
       },
     });
   } catch (error) {
-    const err = new AppError(error.message, 400);
+    const err = new AppError(error.message, 400, error);
     next(err);
   }
 };
@@ -113,7 +113,7 @@ exports.deleteTour = async (req, res, next) => {
       data: null,
     });
   } catch (error) {
-    const err = new AppError(error.message, 404);
+    const err = new AppError(error.message, 404, error);
     next(err);
   }
 };
@@ -176,7 +176,7 @@ exports.getTourStats = async (req, res, next) => {
       },
     });
   } catch (error) {
-    const err = new AppError(error.message, 404);
+    const err = new AppError(error.message, 404, error);
     next(err);
   }
 };
@@ -239,7 +239,7 @@ exports.getMonthlyPlan = async (req, res, next) => {
       },
     });
   } catch (error) {
-    const err = new AppError(error.message, 404);
+    const err = new AppError(error.message, 404, error);
     next(err);
   }
 };

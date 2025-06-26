@@ -67,9 +67,9 @@ app.use((err, req, res, next) => {
     const jsonObj = {};
     if (process.env.NODE_ENV === 'development') {
       jsonObj.status = err.status;
-      jsonObj.message = err.message;
       jsonObj.error = err;
       jsonObj.stack = err.stack;
+      jsonObj.message = err.message;
     } else if (process.env.NODE_ENV === 'production') {
       jsonObj.status = err.status;
       jsonObj.message = err.message;
