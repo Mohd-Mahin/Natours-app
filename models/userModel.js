@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const validator = require('validator');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -17,6 +18,11 @@ const userSchema = new mongoose.Schema({
       message: (props) =>
         `${props.value} is not a valid email. Please provide a valid email`,
     },
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin', 'guide', 'lead-guide'],
+    default: 'user',
   },
   photo: String,
   password: {
@@ -36,6 +42,13 @@ const userSchema = new mongoose.Schema({
       message: 'Passwords are not the same',
     },
   },
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  passwordChangedAt: Date,
+  active: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -48,12 +61,39 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
 userSchema.methods.correctPassword = async function (
   candidatePassword,
-  userPassword,
+  hashedPassword,
 ) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return await bcrypt.compare(candidatePassword, hashedPassword);
 };
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  // storing the encrypted token in the database
+  // sending the token to the user's email
+  return resetToken;
+};
+
+userSchema.pre(/^find/, function (next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
 
 // The following code ensures that the password field is removed from user objects
 // whenever they are converted to JSON (e.g., when sending a response) or to plain objects.
@@ -72,6 +112,8 @@ userSchema.methods.correctPassword = async function (
 userSchema.set('toJSON', {
   transform: function (doc, ret, _) {
     delete ret.password;
+    delete ret.active;
+    delete ret.passwordChangedAt;
     return ret;
   },
 });
@@ -79,6 +121,8 @@ userSchema.set('toJSON', {
 userSchema.set('toObject', {
   transform: function (doc, ret, _) {
     delete ret.password;
+    delete ret.active;
+    delete ret.passwordChangedAt;
     return ret;
   },
 });

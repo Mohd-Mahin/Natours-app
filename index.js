@@ -2,6 +2,12 @@ const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const { rateLimit } = require('express-rate-limit');
+const helmet = require('helmet');
+const xss = require('xss-clean');
+const mongoSanitize = require('express-mongo-sanitize');
+const hpp = require('hpp');
+
 const AppError = require('./utils/AppError');
 
 dotenv.config({ path: './config.env' });
@@ -11,6 +17,10 @@ const userRouter = require('./routes/userRoutes');
 
 const app = express();
 
+// global middleware
+// 1. Security HTTP headers
+app.use(helmet());
+
 mongoose
   .connect(process.env.DATABASE, {
     dbName: 'natours-app',
@@ -19,12 +29,40 @@ mongoose
     console.log('Connected to database...');
   });
 
-// MIDDLEWARE - 1 - GLOBAL
+// limit requests from same API: Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  message: 'Too many requests from this IP, please try again in an hour!',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api', limiter);
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'ratingsQuantity',
+      'ratingsAverage',
+      'maxGroupSize',
+      'difficulty',
+      'price',
+    ],
+  }),
+);
+
+// MIDDLEWARE - 1 - GLOBAL - Development logging
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
-app.use(express.json());
+// body parser, serving static files, reading data from body into req.body
+app.use(express.json({ limit: '10kb' }));
+// serving static files
 app.use(express.static(`${__dirname}/public`));
 
-// MIDDLEWARE - 2
+app.use(xss());
+app.use(mongoSanitize());
+
+// MIDDLEWARE - 2  Test middleware
 // app.use((req, res, next) => {
 //   console.log('hello from the middleware');
 //   next();
